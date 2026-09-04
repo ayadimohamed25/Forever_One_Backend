@@ -1,0 +1,4 @@
+﻿/vendor/
+.env
+/uploads/*.png
+/uploads/*.jpg
