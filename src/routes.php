@@ -30,3 +30,6 @@ $router->get("$base/dashboard", [App\Controllers\DashboardController::class, 'su
 $router->post("$base/documents/scan", [App\Controllers\DocumentController::class, 'scan']);
 $router->post("$base/documents/confirm", [App\Controllers\DocumentController::class, 'confirm']);
 $router->get("$base/documents", [App\Controllers\DocumentController::class, 'index']);
+
+$router->post("$base/ai/chat", [App\Controllers\AiController::class, 'chat']);
+$router->get("$base/ai/history", [App\Controllers\AiController::class, 'history']);
