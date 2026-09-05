@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Repositories\PurchaseRepository;
+use App\Services\AuditService;
 
 class PurchaseController extends BaseController {
     public function index(): void {
@@ -30,6 +31,7 @@ class PurchaseController extends BaseController {
 
         try {
             $purchase = (new PurchaseRepository())->create($claims['tenant_id'], $data);
+            AuditService::log($claims['tenant_id'], $claims['user_id'], 'create_purchase', 'purchase', $purchase['id'], ['total' => $purchase['total']]);
             http_response_code(201);
             echo json_encode($purchase);
         } catch (\Exception $e) {

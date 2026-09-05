@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Repositories\DocumentRepository;
 use App\Services\OcrService;
+use App\Services\AuditService;
 
 class DocumentController extends BaseController {
     public function scan(): void {
@@ -42,6 +43,7 @@ class DocumentController extends BaseController {
     }
 
     public function confirm(): void {
+        
         header('Content-Type: application/json');
         $claims = $this->authenticate();
         $data = $this->getJsonBody();
@@ -53,7 +55,12 @@ class DocumentController extends BaseController {
         }
 
         (new DocumentRepository())->confirm($claims['tenant_id'], $data['id'], $data['amount'], $data['date'] ?? null);
+                (new DocumentRepository())->confirm($claims['tenant_id'], $data['id'], $data['amount'], $data['date'] ?? null);
+
+        AuditService::log($claims['tenant_id'], $claims['user_id'], 'confirm_document', 'document', $data['id'], ['amount' => $data['amount']]);
+
         echo json_encode(['status' => 'confirmed']);
+        
     }
 
     public function index(): void {

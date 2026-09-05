@@ -37,3 +37,8 @@ $router->get("$base/ai/history", [App\Controllers\AiController::class, 'history'
 $router->get("$base/predictions/stock", [App\Controllers\PredictionController::class, 'stockForecast']);
 $router->get("$base/predictions/dormant", [App\Controllers\PredictionController::class, 'dormantProducts']);
 $router->get("$base/predictions/customers", [App\Controllers\PredictionController::class, 'customerScoring']);
+
+$router->get("$base/audit", [App\Controllers\AuditController::class, 'index']);
+
+$router->get("$base/reports/director", [App\Controllers\ReportController::class, 'directorReport']);
+

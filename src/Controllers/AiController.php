@@ -3,9 +3,11 @@ namespace App\Controllers;
 use App\Repositories\AiContextRepository;
 use App\Repositories\AiConversationRepository;
 use App\Services\GeminiService;
+use App\Services\AuditService;
 
 class AiController extends BaseController {
     public function chat(): void {
+        
         header('Content-Type: application/json');
         $claims = $this->authenticate();
         $data = $this->getJsonBody();
@@ -22,6 +24,7 @@ class AiController extends BaseController {
         $conversation = (new AiConversationRepository())->create(
             $claims['tenant_id'], $claims['user_id'], $data['question'], $answer
         );
+        AuditService::log($claims['tenant_id'], $claims['user_id'], 'ai_query', 'ai_conversation', $conversation['id'], ['question' => $data['question']]);
 
         echo json_encode($conversation);
     }

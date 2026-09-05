@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Repositories\PaymentRepository;
+use App\Services\AuditService;
 
 class PaymentController extends BaseController {
     public function store(): void {
@@ -21,6 +22,7 @@ class PaymentController extends BaseController {
 
         $repo = new PaymentRepository();
         $payment = $repo->create($claims['tenant_id'], $data);
+        AuditService::log($claims['tenant_id'], $claims['user_id'], 'record_payment', 'payment', $payment['id'], ['amount' => $data['amount']]);
 
         $balance = !empty($data['sale_id'])
             ? $repo->getSaleBalance($claims['tenant_id'], $data['sale_id'])

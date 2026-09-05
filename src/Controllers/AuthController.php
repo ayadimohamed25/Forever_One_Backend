@@ -2,6 +2,7 @@
 namespace App\Controllers;
 use App\Repositories\UserRepository;
 use App\Services\JwtService;
+use App\Services\AuditService;
 
 class AuthController {
     public function login(): void {
@@ -21,6 +22,8 @@ class AuthController {
             'tenant_id' => $user['tenant_id'],
             'role' => $user['role'],
         ]);
+        
+        AuditService::log($user['tenant_id'], $user['id'], 'login', 'user', $user['id']);
 
         echo json_encode([
             'token' => $token,

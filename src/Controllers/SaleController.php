@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Repositories\SaleRepository;
+use App\Services\AuditService;
 
 class SaleController extends BaseController {
     public function index(): void {
@@ -30,6 +31,7 @@ class SaleController extends BaseController {
 
         try {
             $sale = (new SaleRepository())->create($claims['tenant_id'], $data);
+            AuditService::log($claims['tenant_id'], $claims['user_id'], 'create_sale', 'sale', $sale['id'], ['total' => $sale['total']]);
             http_response_code(201);
             echo json_encode($sale);
         } catch (\Exception $e) {
