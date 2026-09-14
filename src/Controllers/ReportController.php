@@ -39,12 +39,14 @@ class ReportController extends BaseController {
             'recent_sales' => $recentSales,
         ];
 
-        $pdf = (new ReportService())->generateDirectorReport($data);
+        $locale = in_array($_GET['locale'] ?? 'en', ['en', 'fr']) ? $_GET['locale'] : 'en';
+        $pdf = (new ReportService())->generateDirectorReport($data, $locale);
 
         AuditService::log($tenantId, $claims['user_id'], 'generate_report', 'report', null, ['type' => 'director']);
 
         header('Content-Type: application/pdf');
-        header('Content-Disposition: attachment; filename="rapport-dirigeant-' . date('Y-m-d') . '.pdf"');
+        $filename = ($locale === 'fr' ? 'rapport-dirigeant-' : 'director-report-') . date('Y-m-d') . '.pdf';
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Content-Length: ' . strlen($pdf));
         echo $pdf;
     }
