@@ -18,7 +18,8 @@ class AiController extends BaseController {
             return;
         }
 
-        $context = (new AiContextRepository())->buildContext($claims['tenant_id']);
+        $locale = in_array($data['locale'] ?? 'en', ['en', 'fr']) ? $data['locale'] : 'en';
+        $context = (new AiContextRepository())->buildContext($claims['tenant_id'], $locale);
         $answer = (new GeminiService())->ask($context, $data['question']);
 
         $conversation = (new AiConversationRepository())->create(

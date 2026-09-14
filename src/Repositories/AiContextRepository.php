@@ -3,11 +3,19 @@ namespace App\Repositories;
 use App\Config\Database;
 
 class AiContextRepository {
-    public function buildContext(string $tenantId): string {
+    public function buildContext(string $tenantId, string $locale = 'en'): string {
         $pdo = Database::connect();
-        $context = "Tu es un assistant métier pour une PME. Réponds uniquement à partir des données ci-dessous. ";
-        $context .= "Si l'information n'est pas dans les données, dis-le clairement au lieu d'inventer. ";
-        $context .= "Sois concis et concret.\n\n=== DONNÉES DE L'ENTREPRISE ===\n\n";
+                if ($locale === 'fr') {
+            $context = "Tu es un assistant métier pour une PME. Réponds UNIQUEMENT en français, ";
+            $context .= "et uniquement à partir des données ci-dessous. ";
+            $context .= "Si l'information n'est pas dans les données, dis-le clairement au lieu d'inventer. ";
+            $context .= "Sois concis et concret.\n\n=== DONNÉES DE L'ENTREPRISE ===\n\n";
+        } else {
+            $context = "You are a business assistant for an SME. Answer ONLY in English, ";
+            $context .= "and only from the data below. ";
+            $context .= "If the information is not in the data, say so clearly instead of inventing it. ";
+            $context .= "Be concise and concrete.\n\n=== COMPANY DATA ===\n\n";
+        }
 
         // Products with current stock
         $stmt = $pdo->prepare(
