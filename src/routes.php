@@ -42,3 +42,14 @@ $router->get("$base/audit", [App\Controllers\AuditController::class, 'index']);
 
 $router->get("$base/reports/director", [App\Controllers\ReportController::class, 'directorReport']);
 
+$router->get("$base/products/show", [App\Controllers\ProductController::class, 'show']);
+$router->post("$base/products/update", [App\Controllers\ProductController::class, 'update']);
+$router->post("$base/products/delete", [App\Controllers\ProductController::class, 'destroy']);
+
+$router->get("$base/customers/show", [App\Controllers\CustomerController::class, 'show']);
+$router->post("$base/customers/update", [App\Controllers\CustomerController::class, 'update']);
+$router->post("$base/customers/delete", [App\Controllers\CustomerController::class, 'destroy']);
+
+$router->get("$base/suppliers/show", [App\Controllers\SupplierController::class, 'show']);
+$router->post("$base/suppliers/update", [App\Controllers\SupplierController::class, 'update']);
+$router->post("$base/suppliers/delete", [App\Controllers\SupplierController::class, 'destroy']);
