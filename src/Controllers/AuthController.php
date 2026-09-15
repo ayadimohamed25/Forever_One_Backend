@@ -22,12 +22,24 @@ class AuthController {
             'tenant_id' => $user['tenant_id'],
             'role' => $user['role'],
         ]);
-        
+
         AuditService::log($user['tenant_id'], $user['id'], 'login', 'user', $user['id']);
+
+                // Include the company name so the app can show it without another round trip.
+        $pdo = \App\Config\Database::connect();
+        $stmt = $pdo->prepare('SELECT name FROM tenants WHERE id = ?');
+        $stmt->execute([$user['tenant_id']]);
+        $companyName = $stmt->fetchColumn() ?: '';
 
         echo json_encode([
             'token' => $token,
-            'user' => ['id' => $user['id'], 'email' => $user['email'], 'role' => $user['role']],
+            'user' => [
+                'id' => $user['id'],
+                'email' => $user['email'],
+                'role' => $user['role'],
+                'tenant_id' => $user['tenant_id'],
+                'company_name' => $companyName,
+            ],
         ]);
     }
 }
