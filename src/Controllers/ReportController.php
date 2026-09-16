@@ -17,7 +17,7 @@ class ReportController extends BaseController {
         $stmt->execute([$tenantId]);
         $companyName = $stmt->fetchColumn() ?: 'Entreprise';
 
-        $summary = (new DashboardRepository())->getSummary($tenantId);
+        $summary = (new DashboardRepository())->getSummary($tenantId)['kpis'];
         $predictions = new PredictionRepository();
 
         $stmt = $pdo->prepare(
@@ -30,7 +30,7 @@ class ReportController extends BaseController {
 
         $data = [
             'company_name' => $companyName,
-            'revenue' => number_format($summary['revenue'], 2),
+            'revenue' => number_format($summary['revenue_total'], 2),
             'receivables' => number_format($summary['receivables'], 2),
             'payables' => number_format($summary['payables'], 2),
             'low_stock_count' => $summary['low_stock_count'],
