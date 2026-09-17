@@ -53,3 +53,10 @@ $router->post("$base/customers/delete", [App\Controllers\CustomerController::cla
 $router->get("$base/suppliers/show", [App\Controllers\SupplierController::class, 'show']);
 $router->post("$base/suppliers/update", [App\Controllers\SupplierController::class, 'update']);
 $router->post("$base/suppliers/delete", [App\Controllers\SupplierController::class, 'destroy']);
+
+$router->get("$base/categories", [App\Controllers\CategoryController::class, 'index']);
+$router->post("$base/categories", [App\Controllers\CategoryController::class, 'store']);
+$router->post("$base/categories/update", [App\Controllers\CategoryController::class, 'update']);
+$router->post("$base/categories/delete", [App\Controllers\CategoryController::class, 'destroy']);
+
+$router->post("$base/purchases/receive", [App\Controllers\PurchaseController::class, 'receive']);

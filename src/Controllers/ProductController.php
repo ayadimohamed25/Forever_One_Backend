@@ -7,8 +7,14 @@ class ProductController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
         $claims = $this->authenticate();
-        $search = $_GET['search'] ?? null;
-        $products = (new ProductRepository())->findAllByTenant($claims['tenant_id'], $search);
+
+        $products = (new ProductRepository())->findAllByTenant(
+            $claims['tenant_id'],
+            $_GET['search'] ?? null,
+            $_GET['category_id'] ?? null,
+            isset($_GET['active_only']) && $_GET['active_only'] === '1'
+        );
+
         echo json_encode($products);
     }
 
@@ -17,13 +23,19 @@ class ProductController extends BaseController {
         $claims = $this->authenticate();
         $id = $_GET['id'] ?? '';
 
-        $product = (new ProductRepository())->findById($claims['tenant_id'], $id);
+        $repo = new ProductRepository();
+        $product = $repo->findById($claims['tenant_id'], $id);
+
         if (!$product) {
             http_response_code(404);
             echo json_encode(['error' => 'Product not found']);
             return;
         }
-        echo json_encode($product);
+
+        echo json_encode([
+            'product' => $product,
+            'stock_history' => $repo->stockHistory($claims['tenant_id'], $id),
+        ]);
     }
 
     public function store(): void {

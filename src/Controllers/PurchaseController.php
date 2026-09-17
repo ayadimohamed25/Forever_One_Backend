@@ -3,6 +3,7 @@ namespace App\Controllers;
 use App\Repositories\PurchaseRepository;
 use App\Services\AuditService;
 
+
 class PurchaseController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
@@ -38,5 +39,31 @@ class PurchaseController extends BaseController {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to create purchase']);
         }
+    }
+    public function receive(): void {
+        header('Content-Type: application/json');
+        $claims = $this->authenticate();
+        $data = $this->getJsonBody();
+
+        if (empty($data['id'])) {
+            http_response_code(422);
+            echo json_encode(['error' => 'id is required']);
+            return;
+        }
+
+        $ok = (new PurchaseRepository())->markReceived(
+            $claims['tenant_id'],
+            $data['id'],
+            $data['received_date'] ?? null
+        );
+
+        if (!$ok) {
+            http_response_code(409);
+            echo json_encode(['error' => 'PURCHASE_ALREADY_RECEIVED']);
+            return;
+        }
+
+        AuditService::log($claims['tenant_id'], $claims['user_id'], 'receive_purchase', 'purchase', $data['id']);
+        echo json_encode(['status' => 'received']);
     }
 }
