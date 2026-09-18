@@ -68,3 +68,7 @@ $router->post("$base/sales/delete", [App\Controllers\SaleController::class, 'des
 $router->get("$base/purchases/show", [App\Controllers\PurchaseController::class, 'show']);
 $router->post("$base/purchases/update", [App\Controllers\PurchaseController::class, 'update']);
 $router->post("$base/purchases/delete", [App\Controllers\PurchaseController::class, 'destroy']);
+
+$router->post("$base/warehouses", [App\Controllers\WarehouseController::class, 'store']);
+$router->post("$base/warehouses/update", [App\Controllers\WarehouseController::class, 'update']);
+$router->post("$base/warehouses/delete", [App\Controllers\WarehouseController::class, 'destroy']);
