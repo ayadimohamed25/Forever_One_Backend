@@ -6,7 +6,7 @@ use App\Services\AuditService;
 class PaymentController extends BaseController {
     public function store(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_payments');
         $data = $this->getJsonBody();
 
         if (empty($data['amount']) || (empty($data['sale_id']) && empty($data['purchase_id']))) {
@@ -34,14 +34,14 @@ class PaymentController extends BaseController {
 
     public function saleBalance(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_payments');
         $saleId = $_GET['sale_id'] ?? '';
         echo json_encode((new PaymentRepository())->getSaleBalance($claims['tenant_id'], $saleId));
     }
 
     public function purchaseBalance(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_payments');
         $purchaseId = $_GET['purchase_id'] ?? '';
         echo json_encode((new PaymentRepository())->getPurchaseBalance($claims['tenant_id'], $purchaseId));
     }

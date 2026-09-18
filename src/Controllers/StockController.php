@@ -6,7 +6,7 @@ use App\Services\AuditService;
 class StockController extends BaseController {
     public function storeMovement(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_stock');
         $data = $this->getJsonBody();
 
         foreach (['product_id', 'warehouse_id', 'type', 'quantity'] as $field) {

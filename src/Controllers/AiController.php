@@ -9,7 +9,7 @@ class AiController extends BaseController {
     public function chat(): void {
         
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('use_ai');
         $data = $this->getJsonBody();
 
         if (empty($data['question'])) {
@@ -32,7 +32,7 @@ class AiController extends BaseController {
 
     public function history(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('use_ai');
         echo json_encode((new AiConversationRepository())->findAllByTenant($claims['tenant_id']));
     }
 }

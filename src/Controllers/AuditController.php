@@ -5,7 +5,7 @@ use App\Repositories\AuditRepository;
 class AuditController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_audit');
 
         // Only admins can read the audit log (cahier des charges: journal non modifiable
         // par les utilisateurs métier ordinaires)

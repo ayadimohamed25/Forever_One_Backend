@@ -72,3 +72,13 @@ $router->post("$base/purchases/delete", [App\Controllers\PurchaseController::cla
 $router->post("$base/warehouses", [App\Controllers\WarehouseController::class, 'store']);
 $router->post("$base/warehouses/update", [App\Controllers\WarehouseController::class, 'update']);
 $router->post("$base/warehouses/delete", [App\Controllers\WarehouseController::class, 'destroy']);
+
+$router->get("$base/users", [App\Controllers\UserController::class, 'index']);
+$router->post("$base/users", [App\Controllers\UserController::class, 'store']);
+$router->post("$base/users/update", [App\Controllers\UserController::class, 'update']);
+$router->post("$base/users/delete", [App\Controllers\UserController::class, 'destroy']);
+$router->post("$base/users/reset-password", [App\Controllers\UserController::class, 'resetPassword']);
+
+$router->get("$base/profile", [App\Controllers\UserController::class, 'profile']);
+$router->post("$base/profile", [App\Controllers\UserController::class, 'updateProfile']);
+$router->post("$base/profile/password", [App\Controllers\UserController::class, 'changeOwnPassword']);

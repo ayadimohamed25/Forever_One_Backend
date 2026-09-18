@@ -7,14 +7,14 @@ use App\Services\AuditService;
 class PurchaseController extends BaseController {
        public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_purchases');
         $search = $_GET['search'] ?? null;
         echo json_encode((new PurchaseRepository())->findAllByTenant($claims['tenant_id'], $search));
     }
 
     public function show(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_purchases');
         $id = $_GET['id'] ?? '';
 
         $repo = new PurchaseRepository();
@@ -34,7 +34,7 @@ class PurchaseController extends BaseController {
 
     public function update(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_purchases');
         $data = $this->getJsonBody();
 
         if (empty($data['id']) || empty($data['lines'])) {
@@ -68,7 +68,7 @@ class PurchaseController extends BaseController {
 
     public function destroy(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_purchases');
         $data = $this->getJsonBody();
 
         if (empty($data['id'])) {
@@ -103,7 +103,7 @@ class PurchaseController extends BaseController {
 
     public function store(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_purchases');
         $data = $this->getJsonBody();
 
         foreach (['supplier_id', 'warehouse_id', 'lines'] as $field) {
@@ -132,7 +132,7 @@ class PurchaseController extends BaseController {
     }
     public function receive(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_purchases');
         $data = $this->getJsonBody();
 
         if (empty($data['id'])) {

@@ -6,13 +6,13 @@ use App\Services\AuditService;
 class CategoryController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_products');
         echo json_encode((new CategoryRepository())->findAllByTenant($claims['tenant_id']));
     }
 
     public function store(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_products');
         $data = $this->getJsonBody();
 
         if (empty($data['name'])) {
@@ -30,7 +30,7 @@ class CategoryController extends BaseController {
 
     public function update(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_products');
         $data = $this->getJsonBody();
 
         if (empty($data['id']) || empty($data['name'])) {
@@ -54,7 +54,7 @@ class CategoryController extends BaseController {
 
     public function destroy(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_products');
         $data = $this->getJsonBody();
 
         if (empty($data['id'])) {

@@ -6,14 +6,14 @@ use App\Services\AuditService;
 class SaleController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_sales');
         $search = $_GET['search'] ?? null;
         echo json_encode((new SaleRepository())->findAllByTenant($claims['tenant_id'], $search));
     }
 
     public function show(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_sales');
         $id = $_GET['id'] ?? '';
 
         $repo = new SaleRepository();
@@ -33,7 +33,7 @@ class SaleController extends BaseController {
 
     public function store(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_sales');
         $data = $this->getJsonBody();
 
         foreach (['customer_id', 'warehouse_id', 'lines'] as $field) {
@@ -63,7 +63,7 @@ class SaleController extends BaseController {
 
     public function update(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_sales');
         $data = $this->getJsonBody();
 
         if (empty($data['id']) || empty($data['lines'])) {
@@ -98,7 +98,7 @@ class SaleController extends BaseController {
 
     public function destroy(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_sales');
         $data = $this->getJsonBody();
 
         if (empty($data['id'])) {

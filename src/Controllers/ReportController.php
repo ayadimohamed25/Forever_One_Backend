@@ -9,7 +9,7 @@ use App\Services\ReportService;
 
 class ReportController extends BaseController {
     public function directorReport(): void {
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_reports');
         $tenantId = $claims['tenant_id'];
 
         $pdo = Database::connect();

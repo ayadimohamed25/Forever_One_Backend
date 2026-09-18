@@ -7,7 +7,7 @@ use App\Services\AuditService;
 class DocumentController extends BaseController {
     public function scan(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('scan_documents');
 
         if (empty($_FILES['image'])) {
             http_response_code(422);
@@ -45,7 +45,7 @@ class DocumentController extends BaseController {
     public function confirm(): void {
         
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('scan_documents');
         $data = $this->getJsonBody();
 
         if (empty($data['id']) || !isset($data['amount'])) {
@@ -65,7 +65,7 @@ class DocumentController extends BaseController {
 
     public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('scan_documents');
         echo json_encode((new DocumentRepository())->findAllByTenant($claims['tenant_id']));
     }
 }

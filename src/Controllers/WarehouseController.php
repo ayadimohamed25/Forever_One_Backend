@@ -6,14 +6,14 @@ use App\Services\AuditService;
 class WarehouseController extends BaseController {
     public function index(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('view_warehouses');
         $search = $_GET['search'] ?? null;
         echo json_encode((new WarehouseRepository())->findAllByTenant($claims['tenant_id'], $search));
     }
 
     public function store(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_warehouses');
         $data = $this->getJsonBody();
 
         if (empty($data['name'])) {
@@ -31,7 +31,7 @@ class WarehouseController extends BaseController {
 
     public function update(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_warehouses');
         $data = $this->getJsonBody();
 
         if (empty($data['id']) || empty($data['name'])) {
@@ -55,7 +55,7 @@ class WarehouseController extends BaseController {
 
     public function destroy(): void {
         header('Content-Type: application/json');
-        $claims = $this->authenticate();
+        $claims = $this->authorize('manage_warehouses');
         $data = $this->getJsonBody();
 
         if (empty($data['id'])) {

@@ -3,6 +3,20 @@ namespace App\Controllers;
 use App\Services\JwtService;
 
 abstract class BaseController {
+    /// Authenticates and checks the permission in one step.
+    /// Sends 403 and stops the request when the role is not allowed.
+    protected function authorize(string $permission): array {
+        $claims = $this->authenticate();
+        $role = $claims['role'] ?? '';
+
+        if (!\App\Core\Permissions::can($role, $permission)) {
+            http_response_code(403);
+            echo json_encode(['error' => 'FORBIDDEN']);
+            exit;
+        }
+
+        return $claims;
+    }
     protected function authenticate(): array {
         $headers = getallheaders();
         $authHeader = $headers['Authorization'] ?? $headers['authorization'] ?? '';
