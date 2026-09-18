@@ -82,3 +82,5 @@ $router->post("$base/users/reset-password", [App\Controllers\UserController::cla
 $router->get("$base/profile", [App\Controllers\UserController::class, 'profile']);
 $router->post("$base/profile", [App\Controllers\UserController::class, 'updateProfile']);
 $router->post("$base/profile/password", [App\Controllers\UserController::class, 'changeOwnPassword']);
+
+$router->post("$base/auth/register", [App\Controllers\RegisterController::class, 'register']);

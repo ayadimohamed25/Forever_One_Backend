@@ -58,6 +58,9 @@ class Permissions {
         ],
     ];
 
+    /// Permissions that only the admin wildcard grants.
+    private const ADMIN_ONLY = ['manage_users'];
+
     public static function can(string $role, string $permission): bool {
         $allowed = self::MATRIX[$role] ?? [];
         return in_array('*', $allowed, true) || in_array($permission, $allowed, true);
@@ -67,15 +70,19 @@ class Permissions {
     /// what the user cannot use, instead of letting them hit a wall.
     public static function forRole(string $role): array {
         $allowed = self::MATRIX[$role] ?? [];
-        if (in_array('*', $allowed, true)) {
-            $all = [];
-            foreach (self::MATRIX as $perms) {
-                foreach ($perms as $p) {
-                    if ($p !== '*') $all[] = $p;
-                }
-            }
-            return array_values(array_unique($all));
+
+        if (!in_array('*', $allowed, true)) {
+            return $allowed;
         }
-        return $allowed;
+
+        // The wildcard expands to every permission the app knows about.
+        $all = self::ADMIN_ONLY;
+        foreach (self::MATRIX as $perms) {
+            foreach ($perms as $p) {
+                if ($p !== '*') $all[] = $p;
+            }
+        }
+
+        return array_values(array_unique($all));
     }
 }
