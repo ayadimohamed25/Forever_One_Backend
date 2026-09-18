@@ -60,3 +60,11 @@ $router->post("$base/categories/update", [App\Controllers\CategoryController::cl
 $router->post("$base/categories/delete", [App\Controllers\CategoryController::class, 'destroy']);
 
 $router->post("$base/purchases/receive", [App\Controllers\PurchaseController::class, 'receive']);
+
+$router->get("$base/sales/show", [App\Controllers\SaleController::class, 'show']);
+$router->post("$base/sales/update", [App\Controllers\SaleController::class, 'update']);
+$router->post("$base/sales/delete", [App\Controllers\SaleController::class, 'destroy']);
+
+$router->get("$base/purchases/show", [App\Controllers\PurchaseController::class, 'show']);
+$router->post("$base/purchases/update", [App\Controllers\PurchaseController::class, 'update']);
+$router->post("$base/purchases/delete", [App\Controllers\PurchaseController::class, 'destroy']);
