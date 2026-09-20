@@ -4,16 +4,26 @@ use App\Config\Database;
 use App\Core\Uuid;
 
 class CategoryRepository {
-    public function findAllByTenant(string $tenantId): array {
+    public function findAllByTenant(string $tenantId, ?string $search = null): array {
         $pdo = Database::connect();
-        $stmt = $pdo->prepare(
-            "SELECT c.*,
-                    (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count
-             FROM categories c
-             WHERE c.tenant_id = ?
-             ORDER BY c.name ASC"
-        );
-        $stmt->execute([$tenantId]);
+
+        $sql = "SELECT c.*,
+                       (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id) AS product_count
+                FROM categories c
+                WHERE c.tenant_id = ?";
+        $params = [$tenantId];
+
+        if ($search !== null && trim($search) !== '') {
+            $sql .= " AND (c.name LIKE ? OR c.description LIKE ?)";
+            $like = '%' . trim($search) . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $sql .= " ORDER BY c.name ASC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

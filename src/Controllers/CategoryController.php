@@ -4,10 +4,11 @@ use App\Repositories\CategoryRepository;
 use App\Services\AuditService;
 
 class CategoryController extends BaseController {
-    public function index(): void {
+        public function index(): void {
         header('Content-Type: application/json');
         $claims = $this->authorize('view_products');
-        echo json_encode((new CategoryRepository())->findAllByTenant($claims['tenant_id']));
+        $search = $_GET['search'] ?? null;
+        echo json_encode((new CategoryRepository())->findAllByTenant($claims['tenant_id'], $search));
     }
 
     public function store(): void {
