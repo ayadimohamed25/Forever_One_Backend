@@ -86,3 +86,5 @@ $router->post("$base/profile/password", [App\Controllers\UserController::class, 
 $router->post("$base/auth/register", [App\Controllers\RegisterController::class, 'register']);
 
 $router->get("$base/ai/context", [App\Controllers\AiController::class, 'context']);
+
+$router->get("$base/ai/health", [App\Controllers\AiController::class, 'health']);

@@ -1,0 +1,3 @@
+2026-09-22 20:27:31 AI_MODEL_NOT_FOUND — HTTP 404 (gemini-2.0-flash): This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.
+2026-09-22 20:27:32 AI_MODEL_NOT_FOUND — HTTP 404 (gemini-1.5-flash): models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.
+2026-09-22 20:27:37 AI_UNAVAILABLE — HTTP 503 (gemini-flash-latest): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.

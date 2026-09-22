@@ -21,13 +21,18 @@ class AiController extends BaseController {
 
         $locale = in_array($data['locale'] ?? 'en', ['en', 'fr'], true) ? $data['locale'] : 'en';
 
-        // Rebuilt on every question from the same repositories as the screens,
-        // so the answer always reflects the data as it is right now.
         $context = (new AiContextRepository())->buildContext($claims['tenant_id'], $locale);
-        $answer = (new GeminiService())->ask($context, $question);
+        $result = (new GeminiService())->ask($context, $question);
+
+        // The app turns this code into a message in the user's language.
+        if (!$result['ok']) {
+            http_response_code(503);
+            echo json_encode(['error' => $result['code']]);
+            return;
+        }
 
         $conversation = (new AiConversationRepository())->create(
-            $claims['tenant_id'], $claims['user_id'], $question, $answer
+            $claims['tenant_id'], $claims['user_id'], $question, $result['text']
         );
         $conversation['created_at'] = date('Y-m-d H:i:s');
 
@@ -45,13 +50,19 @@ class AiController extends BaseController {
         echo json_encode((new AiConversationRepository())->findAllByTenant($claims['tenant_id']));
     }
 
-    /// Returns exactly what the AI receives. Useful to check the numbers,
-    /// and to show that the model only ever sees this tenant's data.
+    /// Exactly what the AI receives — to verify the figures.
     public function context(): void {
         $claims = $this->authorize('use_ai');
         $locale = in_array($_GET['locale'] ?? 'en', ['en', 'fr'], true) ? $_GET['locale'] : 'en';
 
         header('Content-Type: text/plain; charset=utf-8');
         echo (new AiContextRepository())->buildContext($claims['tenant_id'], $locale);
+    }
+
+    /// Why the AI is failing: key, model, HTTP status.
+    public function health(): void {
+        header('Content-Type: application/json');
+        $this->authorize('use_ai');
+        echo json_encode((new GeminiService())->health(), JSON_PRETTY_PRINT);
     }
 }
