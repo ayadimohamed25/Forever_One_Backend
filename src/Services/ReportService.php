@@ -7,6 +7,9 @@ use Dompdf\Options;
 /// Renders the director report as a PDF. Its text comes from the EN/FR table
 /// below, chosen by the language currently selected in the app.
 class ReportService {
+    /// Long stock lists are cut here; the rest is summarised in one line.
+    private const STOCK_ROWS = 10;
+
     private array $t = [];
 
     private const TRANSLATIONS = [
@@ -18,6 +21,8 @@ class ReportService {
             'payables' => 'Payables',
             'stockAlerts' => 'Stock alerts',
             'stockSection' => 'Stock and forecasts',
+            'stockNote' => 'The 10 most critical products.',
+            'andOthers' => 'and %d other products',
             'product' => 'Product',
             'stock' => 'Stock',
             'coverage' => 'Coverage',
@@ -55,6 +60,8 @@ class ReportService {
             'payables' => 'Dettes',
             'stockAlerts' => 'Alertes stock',
             'stockSection' => 'Stock et prévisions',
+            'stockNote' => 'Les 10 produits les plus critiques.',
+            'andOthers' => 'et %d autres produits',
             'product' => 'Produit',
             'stock' => 'Stock',
             'coverage' => 'Couverture',
@@ -122,7 +129,7 @@ class ReportService {
 
 <div class="band">
   <table><tr>
-    <td style="width:52px"><div class="logo">&#8734;</div></td>
+    <td style="width:56px"><div class="logo">&#8734;</div></td>
     <td>
       <div class="brand">Forever One</div>
       <div class="band-sub">{$t['title']}</div>
@@ -145,15 +152,25 @@ class ReportService {
 
 HTML;
 
-        // ── Stock ──
-        $html .= "<h2>{$t['stockSection']}</h2>";
-        $html .= "<table class=\"data\"><tr><th>{$t['product']}</th><th class=\"num\">{$t['stock']}</th>"
-            . "<th class=\"num\">{$t['coverage']}</th><th class=\"num\">{$t['toOrder']}</th><th>{$t['status']}</th></tr>";
+        // ── Stock: the most critical products first ──
+        $forecast = $d['stock_forecast'];
+        usort($forecast, fn($a, $b) => $this->criticality($a) <=> $this->criticality($b));
+        $shown = array_slice($forecast, 0, self::STOCK_ROWS);
+        $remaining = max(0, count($forecast) - count($shown));
 
-        if (empty($d['stock_forecast'])) {
+        $html .= '<div class="section">';
+        $html .= "<h2>{$t['stockSection']}</h2>";
+        if ($remaining > 0) {
+            $html .= "<p class=\"note\">{$t['stockNote']}</p>";
+        }
+        $html .= "<table class=\"data\"><thead><tr><th>{$t['product']}</th><th class=\"num\">{$t['stock']}</th>"
+            . "<th class=\"num\">{$t['coverage']}</th><th class=\"num\">{$t['toOrder']}</th>"
+            . "<th class=\"right\">{$t['status']}</th></tr></thead><tbody>";
+
+        if (!$shown) {
             $html .= "<tr><td colspan=\"5\" class=\"muted\">{$t['noData']}</td></tr>";
         }
-        foreach ($d['stock_forecast'] as $s) {
+        foreach ($shown as $s) {
             [$label, $class] = $this->stockStatus($s);
             $coverage = $s['days_of_coverage'] !== null
                 ? (int) $s['days_of_coverage'] . ' ' . $t['days']
@@ -165,15 +182,21 @@ HTML;
                 . '<td class="num">' . (int) $s['current_stock'] . '</td>'
                 . '<td class="num">' . $coverage . '</td>'
                 . '<td class="num">' . $order . '</td>'
-                . '<td><span class="pill ' . $class . '">' . $label . '</span></td>'
+                . '<td class="right"><span class="pill ' . $class . '">' . $label . '</span></td>'
                 . '</tr>';
         }
-        $html .= '</table>';
+        $html .= '</tbody></table>';
+
+        if ($remaining > 0) {
+            $html .= '<p class="note">' . sprintf($t['andOthers'], $remaining) . '</p>';
+        }
+        $html .= '</div>';
 
         // ── Recent sales ──
+        $html .= '<div class="section">';
         $html .= "<h2>{$t['salesSection']}</h2>";
-        $html .= "<table class=\"data\"><tr><th>{$t['date']}</th><th>{$t['customer']}</th>"
-            . "<th class=\"num\">{$t['amount']}</th><th>{$t['status']}</th></tr>";
+        $html .= "<table class=\"data\"><thead><tr><th>{$t['date']}</th><th>{$t['customer']}</th>"
+            . "<th class=\"num\">{$t['amount']}</th><th class=\"right\">{$t['status']}</th></tr></thead><tbody>";
 
         if (empty($d['recent_sales'])) {
             $html .= "<tr><td colspan=\"4\" class=\"muted\">{$t['noData']}</td></tr>";
@@ -181,18 +204,19 @@ HTML;
         foreach ($d['recent_sales'] as $s) {
             [$label, $class] = $this->paymentStatus((float) $s['total'], (float) $s['paid']);
             $html .= '<tr>'
-                . '<td>' . $this->day($s['created_at']) . '</td>'
+                . '<td class="nowrap">' . $this->day($s['created_at']) . '</td>'
                 . '<td>' . $this->e($s['customer_name']) . '</td>'
                 . '<td class="num">' . $this->dt((float) $s['total']) . '</td>'
-                . '<td><span class="pill ' . $class . '">' . $label . '</span></td>'
+                . '<td class="right"><span class="pill ' . $class . '">' . $label . '</span></td>'
                 . '</tr>';
         }
-        $html .= '</table>';
+        $html .= '</tbody></table></div>';
 
         // ── Customers to follow up ──
+        $html .= '<div class="section">';
         $html .= "<h2>{$t['followUpSection']}</h2>";
-        $html .= "<table class=\"data\"><tr><th>{$t['customer']}</th><th class=\"num\">{$t['balanceDue']}</th>"
-            . "<th class=\"num\">{$t['score']}</th><th>{$t['reason']}</th></tr>";
+        $html .= "<table class=\"data\"><thead><tr><th>{$t['customer']}</th><th class=\"num\">{$t['balanceDue']}</th>"
+            . "<th class=\"num\">{$t['score']}</th><th>{$t['reason']}</th></tr></thead><tbody>";
 
         $anyToChase = false;
         foreach ($d['customer_scores'] as $c) {
@@ -212,14 +236,23 @@ HTML;
         if (!$anyToChase) {
             $html .= "<tr><td colspan=\"4\" class=\"muted\">{$t['noFollowUp']}</td></tr>";
         }
-        $html .= '</table>';
+        $html .= '</tbody></table></div>';
 
         $html .= "<div class=\"footer\">{$t['footer']}</div></div></body></html>";
 
         return $html;
     }
 
-    /// Same rule as the app: 0 or less → out of stock, flagged → soon, else OK.
+    /// Sort key: out of stock first, then the shortest coverage, then the rest.
+    private function criticality(array $s): int {
+        if ((int) $s['current_stock'] <= 0) return -1_000_000;
+        if (($s['urgency'] ?? 'ok') !== 'ok') {
+            // Fewer days of cover ranks higher; no sales data ranks last of the flagged.
+            return $s['days_of_coverage'] !== null ? (int) $s['days_of_coverage'] : 9_000;
+        }
+        return 1_000_000;
+    }
+
     private function stockStatus(array $s): array {
         if ((int) $s['current_stock'] <= 0) return [$this->t['outOfStock'], 'danger'];
         if (($s['urgency'] ?? 'ok') !== 'ok') return [$this->t['soon'], 'warning'];
@@ -267,39 +300,47 @@ HTML;
     private function css(): string {
         return <<<'CSS'
 @page { margin: 0; }
-body { font-family: 'DejaVu Sans', sans-serif; font-size: 10.5px; color: #2A1F1A; margin: 0; }
+body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #2A1F1A; margin: 0; }
 
-.band { background: #2A1F1A; padding: 22px 36px; }
+.band { background: #2A1F1A; padding: 26px 40px; }
 .band table { width: 100%; border-collapse: collapse; }
 .band td { vertical-align: middle; padding: 0; }
-.logo { width: 40px; height: 40px; line-height: 40px; background: #C8553D; border-radius: 11px;
-        color: #FFFFFF; text-align: center; font-size: 22px; font-weight: bold; }
-.brand { font-size: 17px; font-weight: bold; color: #FFFFFF; }
-.company { font-size: 14px; font-weight: bold; color: #FFFFFF; }
-.band-sub { font-size: 9.5px; color: #D9CFC6; margin-top: 3px; }
+.logo { width: 44px; height: 44px; line-height: 44px; background: #C8553D; border-radius: 12px;
+        color: #FFFFFF; text-align: center; font-size: 24px; font-weight: bold; }
+.brand { font-size: 19px; font-weight: bold; color: #FFFFFF; }
+.company { font-size: 16px; font-weight: bold; color: #FFFFFF; }
+.band-sub { font-size: 11px; color: #D9CFC6; margin-top: 4px; }
 
-.content { padding: 26px 36px 30px 36px; }
+.content { padding: 28px 40px 34px 40px; }
 
-.kpis { width: 100%; border-collapse: separate; border-spacing: 6px 0; }
-.kpi { width: 25%; background: #F5F1EC; border-radius: 10px; padding: 12px; vertical-align: top; }
-.kpi-label { font-size: 8.5px; color: #8C8378; text-transform: uppercase; letter-spacing: 0.4px; }
-.kpi-value { font-size: 15px; font-weight: bold; margin-top: 5px; color: #2A1F1A; }
+.kpis { width: 100%; border-collapse: separate; border-spacing: 7px 0; }
+.kpi { width: 25%; background: #F5F1EC; border-radius: 12px; padding: 14px; vertical-align: top; }
+.kpi-label { font-size: 9.5px; color: #8C8378; text-transform: uppercase; letter-spacing: 0.4px; }
+.kpi-value { font-size: 17px; font-weight: bold; margin-top: 6px; color: #2A1F1A; }
 
-h2 { font-size: 13px; color: #C8553D; margin: 26px 0 8px 0; }
+/* Keep a section with its heading; let the report run onto a second page. */
+.section { page-break-inside: avoid; }
+h2 { font-size: 15px; color: #C8553D; margin: 30px 0 10px 0; }
+.note { font-size: 11px; color: #8C8378; margin: 0 0 10px 0; }
 
 table.data { width: 100%; border-collapse: collapse; }
-table.data th { background: #F5F1EC; color: #2A1F1A; text-align: left; padding: 7px 8px; font-size: 9.5px; }
-table.data td { padding: 7px 8px; border-bottom: 1px solid #EAE3DA; vertical-align: middle; }
+table.data th { background: #F5F1EC; color: #2A1F1A; text-align: left;
+                padding: 11px 10px; font-size: 11.5px; }
+table.data td { padding: 11px 10px; border-bottom: 1px solid #EAE3DA;
+                vertical-align: middle; font-size: 12px; }
+table.data tr { page-break-inside: avoid; }
 .num { text-align: right; white-space: nowrap; }
+.right { text-align: right; }
+.nowrap { white-space: nowrap; }
 
-.pill { padding: 2px 8px; border-radius: 9px; font-size: 9px; font-weight: bold; white-space: nowrap; }
+.pill { padding: 3px 10px; border-radius: 10px; font-size: 10.5px; font-weight: bold; white-space: nowrap; }
 .danger { color: #B42318; background: #FBE4E1; }
 .warning { color: #A16207; background: #FBF0D5; }
 .success { color: #3F7D4E; background: #E5F0E7; }
 
 .text-danger { color: #B42318; font-weight: bold; }
 .muted { color: #8C8378; }
-.footer { margin-top: 30px; font-size: 8.5px; color: #8C8378; text-align: center; }
+.footer { margin-top: 34px; font-size: 10px; color: #8C8378; text-align: center; }
 CSS;
     }
 }

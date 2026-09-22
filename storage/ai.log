@@ -1,3 +1,32 @@
 2026-09-22 20:27:31 AI_MODEL_NOT_FOUND — HTTP 404 (gemini-2.0-flash): This model models/gemini-2.0-flash is no longer available. Please update your code to use models/gemini-3.6-flash for the latest features and improvements. We recommend you to use the Interactions API.
 2026-09-22 20:27:32 AI_MODEL_NOT_FOUND — HTTP 404 (gemini-1.5-flash): models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ModelService.ListModels to see the list of available models and their supported methods.
 2026-09-22 20:27:37 AI_UNAVAILABLE — HTTP 503 (gemini-flash-latest): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 20:50:05 AI_UNAVAILABLE — no attempt made
+2026-09-22 20:50:07 AI_UNAVAILABLE — HTTP 503 (gemini-3.6-flash): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 20:50:10 AI_UNAVAILABLE — HTTP 503 (gemini-flash-latest): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 20:50:11 AI_QUOTA — HTTP 429 (gemini-pro-latest): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+Please retry in 47.568669772s.
+2026-09-22 20:50:17 AI_UNAVAILABLE — no attempt made
+2026-09-22 20:50:21 AI_UNAVAILABLE — HTTP 503 (gemini-3.6-flash): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 20:50:31 AI_UNAVAILABLE — HTTP 503 (gemini-flash-latest): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 20:50:32 AI_QUOTA — HTTP 429 (gemini-pro-latest): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+Please retry in 26.786484096s.
+2026-09-22 21:03:26 AI_UNAVAILABLE — no attempt made
+2026-09-22 21:06:58 AI_UNAVAILABLE — no attempt made
+2026-09-22 21:07:28 AI_NETWORK — curl: Operation timed out after 30005 milliseconds with 0 bytes received
+2026-09-22 21:13:24 AI_UNAVAILABLE — HTTP 503 (gemini-3.6-flash): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 21:13:33 AI_UNAVAILABLE — HTTP 503 (gemini-flash-latest): This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.
+2026-09-22 21:13:34 AI_QUOTA — HTTP 429 (gemini-pro-latest): You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-3.1-pro
+Please retry in 24.675265159s.

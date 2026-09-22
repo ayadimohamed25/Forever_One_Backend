@@ -22,28 +22,32 @@ class GeminiService {
     }
 
     /// ['ok' => true, 'text' => …] or ['ok' => false, 'code' => …, 'detail' => …]
+        /// ['ok' => true, 'text' => …] or ['ok' => false, 'code' => …, 'detail' => …]
     public function ask(string $systemContext, string $question): array {
         if ($this->apiKey === '') {
             return $this->failure('AI_NO_KEY', 'GEMINI_API_KEY is empty in .env');
         }
 
         $models = array_values(array_unique(array_merge([$this->model], self::FALLBACK_MODELS)));
-        $last = $this->failure('AI_UNAVAILABLE', 'no attempt made');
+        $last = null;
 
         foreach ($models as $model) {
             $result = $this->call($model, $systemContext, $question);
             if ($result['ok']) return $result;
 
-            $last = $result;
-            // A retired model or a busy one: try the next candidate.
-            // A bad key, a quota or a blocked prompt won't improve by retrying.
+            // Keep the real reason: the first failure is the one that matters.
+            $last ??= $result;
+
+            // A retired or busy model is worth another candidate; a bad key,
+            // a quota or a blocked prompt will not improve by retrying.
             if (!in_array($result['code'], ['AI_MODEL_NOT_FOUND', 'AI_UNAVAILABLE'], true)) {
                 break;
             }
         }
 
-        return $last;
+        return $last ?? $this->failure('AI_UNAVAILABLE', 'no model candidates configured');
     }
+
 
     /// Diagnosis for /ai/health: is the key set, which model answers, what status.
     public function health(): array {
@@ -97,8 +101,8 @@ class GeminiService {
             CURLOPT_POST => true,
             CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
             CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_CONNECTTIMEOUT => 15,
         ]);
 
         $response = curl_exec($ch);
