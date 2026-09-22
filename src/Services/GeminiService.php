@@ -10,12 +10,14 @@ class GeminiService {
     }
 
     public function ask(string $systemContext, string $question): string {
-        $payload = [
+         $payload = [
             'contents' => [[
                 'parts' => [[
-                    'text' => $systemContext . "\n\nQuestion de l'utilisateur : " . $question
+                    'text' => $systemContext . "\n\n=== QUESTION ===\n" . $question
                 ]]
-            ]]
+            ]],
+            // Low temperature: factual answers grounded in the data.
+            'generationConfig' => ['temperature' => 0.2],
         ];
 
         $ch = curl_init($this->endpoint . '?key=' . $this->apiKey);

@@ -98,6 +98,9 @@ class PredictionRepository {
         }, $rows);
     }
 
+       /// Ranks customers to follow up (0–100). Returns facts rather than a
+    /// sentence, so the app and the PDF can phrase the reason in the user's
+    /// language instead of hard-coded French.
     public function customerScoring(string $tenantId): array {
         $pdo = Database::connect();
         $stmt = $pdo->prepare(
@@ -120,32 +123,24 @@ class PredictionRepository {
         foreach ($customers as $c) {
             $balance = (float) $c['total_sales'] - (float) $c['total_paid'];
             $daysSince = (int) $c['days_since_purchase'];
+            $creditLimit = (float) $c['credit_limit'];
+            $neverPurchased = $daysSince >= 9999;
+            $overLimit = $creditLimit > 0 && $balance > $creditLimit;
 
-            // Score 0-100: weighted by amount owed, inactivity, and credit limit usage
+            // Weighted by amount owed, inactivity, and credit limit usage.
             $score = 0;
             if ($balance > 0) {
-                $score += min(50, ($balance / max($c['credit_limit'], 1)) * 50);
+                $score += min(50, ($balance / max($creditLimit, 1)) * 50);
             }
-            if ($daysSince >= 9999) {
-                $score += 20; // never purchased
+            if ($neverPurchased) {
+                $score += 20;
             } elseif ($daysSince > 60) {
                 $score += 30;
             } elseif ($daysSince > 30) {
                 $score += 15;
             }
-            if ($balance > (float) $c['credit_limit'] && $c['credit_limit'] > 0) {
-                $score += 20; // over credit limit
-            }
-
-            $reason = [];
-            if ($balance > 0) $reason[] = "solde dû de " . number_format($balance, 2) . " DT";
-            if ($daysSince >= 9999) {
-                $reason[] = "aucun achat enregistré";
-            } elseif ($daysSince > 30) {
-                $reason[] = "inactif depuis $daysSince jours";
-            }
-            if ($balance > (float) $c['credit_limit'] && $c['credit_limit'] > 0) {
-                $reason[] = "dépassement du plafond de crédit";
+            if ($overLimit) {
+                $score += 20;
             }
 
             $results[] = [
@@ -153,9 +148,11 @@ class PredictionRepository {
                 'name' => $c['name'],
                 'phone' => $c['phone'],
                 'balance' => round($balance, 2),
-                'days_since_purchase' => $daysSince >= 9999 ? null : $daysSince,
+                'credit_limit' => round($creditLimit, 2),
+                'days_since_purchase' => $neverPurchased ? null : $daysSince,
+                'never_purchased' => $neverPurchased,
+                'over_credit_limit' => $overLimit,
                 'score' => (int) round(min(100, $score)),
-                'reason' => empty($reason) ? 'aucune action requise' : implode(', ', $reason),
             ];
         }
 
