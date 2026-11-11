@@ -11,7 +11,7 @@ class AuditController extends BaseController {
         // par les utilisateurs métier ordinaires)
         if (($claims['role'] ?? '') !== 'admin') {
             http_response_code(403);
-            echo json_encode(['error' => 'Accès réservé aux administrateurs']);
+            echo json_encode(['error' => 'FORBIDDEN']);
             return;
         }
 

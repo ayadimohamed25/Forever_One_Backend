@@ -28,7 +28,7 @@ class ProductController extends BaseController {
 
         if (!$product) {
             http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -45,7 +45,7 @@ class ProductController extends BaseController {
 
         if (empty($data['name'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'Product name is required']);
+            echo json_encode(['error' => 'NAME_REQUIRED']);
             return;
         }
 
@@ -63,14 +63,14 @@ class ProductController extends BaseController {
 
         if (empty($data['id']) || empty($data['name'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and name are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
         $repo = new ProductRepository();
         if (!$repo->findById($claims['tenant_id'], $data['id'])) {
             http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -87,7 +87,7 @@ class ProductController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -95,7 +95,7 @@ class ProductController extends BaseController {
         $product = $repo->findById($claims['tenant_id'], $data['id']);
         if (!$product) {
             http_response_code(404);
-            echo json_encode(['error' => 'Product not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 

@@ -11,7 +11,7 @@ class DocumentController extends BaseController {
 
         if (empty($_FILES['image'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'No image uploaded']);
+            echo json_encode(['error' => 'NO_IMAGE']);
             return;
         }
 
@@ -21,7 +21,7 @@ class DocumentController extends BaseController {
 
         if (!move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to save uploaded image']);
+            echo json_encode(['error' => 'UPLOAD_FAILED']);
             return;
         }
 
@@ -50,7 +50,7 @@ class DocumentController extends BaseController {
 
         if (empty($data['id']) || !isset($data['amount'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and amount are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 

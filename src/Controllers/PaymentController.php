@@ -11,12 +11,12 @@ class PaymentController extends BaseController {
 
         if (empty($data['amount']) || (empty($data['sale_id']) && empty($data['purchase_id']))) {
             http_response_code(422);
-            echo json_encode(['error' => 'amount and either sale_id or purchase_id are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
         if (!empty($data['sale_id']) && !empty($data['purchase_id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'A payment cannot target both a sale and a purchase']);
+            echo json_encode(['error' => 'INVALID_PAYMENT_TARGET']);
             return;
         }
 

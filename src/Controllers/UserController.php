@@ -20,7 +20,7 @@ class UserController extends BaseController {
         foreach (['email', 'password', 'role'] as $field) {
             if (empty($data[$field])) {
                 http_response_code(422);
-                echo json_encode(['error' => "Field '$field' is required"]);
+                echo json_encode(['error' => 'FIELD_REQUIRED', 'field' => $field]);
                 return;
             }
         }
@@ -65,7 +65,7 @@ class UserController extends BaseController {
 
         if (empty($data['id']) || empty($data['email']) || empty($data['role'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id, email and role are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -80,7 +80,7 @@ class UserController extends BaseController {
 
         if (!$user) {
             http_response_code(404);
-            echo json_encode(['error' => 'User not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -114,7 +114,7 @@ class UserController extends BaseController {
 
         if (empty($data['id']) || empty($data['password'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and password are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -127,7 +127,7 @@ class UserController extends BaseController {
         $repo = new UserManagementRepository();
         if (!$repo->findById($claims['tenant_id'], $data['id'])) {
             http_response_code(404);
-            echo json_encode(['error' => 'User not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -144,7 +144,7 @@ class UserController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -159,7 +159,7 @@ class UserController extends BaseController {
 
         if (!$user) {
             http_response_code(404);
-            echo json_encode(['error' => 'User not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -191,9 +191,16 @@ class UserController extends BaseController {
         $user = (new UserManagementRepository())->findById($claims['tenant_id'], $claims['user_id']);
         if (!$user) {
             http_response_code(404);
-            echo json_encode(['error' => 'User not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
+
+        // Same shape as the sign-in response: the app shows the company on the
+        // profile and in the header, and restores the session from here.
+        $stmt = \App\Config\Database::connect()->prepare('SELECT name FROM tenants WHERE id = ?');
+        $stmt->execute([$claims['tenant_id']]);
+        $user['tenant_id'] = $claims['tenant_id'];
+        $user['company_name'] = $stmt->fetchColumn() ?: '';
 
         echo json_encode([
             'user' => $user,
@@ -211,7 +218,7 @@ class UserController extends BaseController {
 
         if (!$user) {
             http_response_code(404);
-            echo json_encode(['error' => 'User not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -244,7 +251,7 @@ class UserController extends BaseController {
 
         if (empty($data['current_password']) || empty($data['new_password'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'current_password and new_password are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 

@@ -18,7 +18,7 @@ class Router {
 
         if (!$handler) {
             http_response_code(404);
-            echo json_encode(['error' => 'Route not found']);
+            echo json_encode(['error' => 'ROUTE_NOT_FOUND']);
             return;
         }
 

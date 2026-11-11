@@ -24,7 +24,7 @@ abstract class BaseController {
 
         if (!$token) {
             http_response_code(401);
-            echo json_encode(['error' => 'Missing authentication token']);
+            echo json_encode(['error' => 'AUTH_REQUIRED']);
             exit;
         }
 
@@ -32,7 +32,7 @@ abstract class BaseController {
             return JwtService::verify($token);
         } catch (\Exception $e) {
             http_response_code(401);
-            echo json_encode(['error' => 'Invalid or expired token']);
+            echo json_encode(['error' => 'SESSION_EXPIRED']);
             exit;
         }
     }

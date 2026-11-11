@@ -14,7 +14,7 @@ class AuthController extends BaseController {
 
         if (empty($data['email']) || empty($data['password'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'Email and password are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -22,7 +22,7 @@ class AuthController extends BaseController {
 
         if (!$user || !password_verify($data['password'], $user['password_hash'])) {
             http_response_code(401);
-            echo json_encode(['error' => 'Invalid credentials']);
+            echo json_encode(['error' => 'INVALID_CREDENTIALS']);
             return;
         }
 

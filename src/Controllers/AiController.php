@@ -17,7 +17,7 @@ class AiController extends BaseController {
         $question = trim($data['question'] ?? '');
         if ($question === '') {
             http_response_code(422);
-            echo json_encode(['error' => 'question is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 

@@ -18,7 +18,7 @@ class CategoryController extends BaseController {
 
         if (empty($data['name'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'Category name is required']);
+            echo json_encode(['error' => 'NAME_REQUIRED']);
             return;
         }
 
@@ -36,14 +36,14 @@ class CategoryController extends BaseController {
 
         if (empty($data['id']) || empty($data['name'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and name are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
         $repo = new CategoryRepository();
         if (!$repo->findById($claims['tenant_id'], $data['id'])) {
             http_response_code(404);
-            echo json_encode(['error' => 'Category not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -60,7 +60,7 @@ class CategoryController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -68,7 +68,7 @@ class CategoryController extends BaseController {
         $category = $repo->findById($claims['tenant_id'], $data['id']);
         if (!$category) {
             http_response_code(404);
-            echo json_encode(['error' => 'Category not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 

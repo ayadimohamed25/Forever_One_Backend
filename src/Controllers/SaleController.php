@@ -21,7 +21,7 @@ class SaleController extends BaseController {
 
         if (!$sale) {
             http_response_code(404);
-            echo json_encode(['error' => 'Sale not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -39,14 +39,14 @@ class SaleController extends BaseController {
         foreach (['customer_id', 'warehouse_id', 'lines'] as $field) {
             if (empty($data[$field])) {
                 http_response_code(422);
-                echo json_encode(['error' => "Field '$field' is required"]);
+                echo json_encode(['error' => 'FIELD_REQUIRED', 'field' => $field]);
                 return;
             }
         }
 
         if (!is_array($data['lines']) || count($data['lines']) === 0) {
             http_response_code(422);
-            echo json_encode(['error' => 'At least one sale line is required']);
+            echo json_encode(['error' => 'LINES_REQUIRED']);
             return;
         }
 
@@ -57,7 +57,7 @@ class SaleController extends BaseController {
             echo json_encode($sale);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to create sale']);
+            echo json_encode(['error' => 'SAVE_FAILED']);
         }
     }
 
@@ -68,14 +68,14 @@ class SaleController extends BaseController {
 
         if (empty($data['id']) || empty($data['lines'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and lines are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
         $repo = new SaleRepository();
         if (!$repo->findById($claims['tenant_id'], $data['id'])) {
             http_response_code(404);
-            echo json_encode(['error' => 'Sale not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -92,7 +92,7 @@ class SaleController extends BaseController {
             echo json_encode(['status' => 'updated']);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to update sale']);
+            echo json_encode(['error' => 'SAVE_FAILED']);
         }
     }
 
@@ -103,7 +103,7 @@ class SaleController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -111,7 +111,7 @@ class SaleController extends BaseController {
         $sale = $repo->findById($claims['tenant_id'], $data['id']);
         if (!$sale) {
             http_response_code(404);
-            echo json_encode(['error' => 'Sale not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -127,7 +127,7 @@ class SaleController extends BaseController {
             echo json_encode(['status' => 'deleted']);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete sale']);
+            echo json_encode(['error' => 'DELETE_FAILED']);
         }
     }
 }

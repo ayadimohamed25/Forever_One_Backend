@@ -22,7 +22,7 @@ class PurchaseController extends BaseController {
 
         if (!$purchase) {
             http_response_code(404);
-            echo json_encode(['error' => 'Purchase not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -39,14 +39,14 @@ class PurchaseController extends BaseController {
 
         if (empty($data['id']) || empty($data['lines'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id and lines are required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
         $repo = new PurchaseRepository();
         if (!$repo->findById($claims['tenant_id'], $data['id'])) {
             http_response_code(404);
-            echo json_encode(['error' => 'Purchase not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -62,7 +62,7 @@ class PurchaseController extends BaseController {
             echo json_encode(['status' => 'updated']);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to update purchase']);
+            echo json_encode(['error' => 'SAVE_FAILED']);
         }
     }
 
@@ -73,7 +73,7 @@ class PurchaseController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 
@@ -81,7 +81,7 @@ class PurchaseController extends BaseController {
         $purchase = $repo->findById($claims['tenant_id'], $data['id']);
         if (!$purchase) {
             http_response_code(404);
-            echo json_encode(['error' => 'Purchase not found']);
+            echo json_encode(['error' => 'NOT_FOUND']);
             return;
         }
 
@@ -97,7 +97,7 @@ class PurchaseController extends BaseController {
             echo json_encode(['status' => 'deleted']);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete purchase']);
+            echo json_encode(['error' => 'DELETE_FAILED']);
         }
     }
 
@@ -109,14 +109,14 @@ class PurchaseController extends BaseController {
         foreach (['supplier_id', 'warehouse_id', 'lines'] as $field) {
             if (empty($data[$field])) {
                 http_response_code(422);
-                echo json_encode(['error' => "Field '$field' is required"]);
+                echo json_encode(['error' => 'FIELD_REQUIRED', 'field' => $field]);
                 return;
             }
         }
 
         if (!is_array($data['lines']) || count($data['lines']) === 0) {
             http_response_code(422);
-            echo json_encode(['error' => 'At least one purchase line is required']);
+            echo json_encode(['error' => 'LINES_REQUIRED']);
             return;
         }
 
@@ -127,7 +127,7 @@ class PurchaseController extends BaseController {
             echo json_encode($purchase);
         } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to create purchase']);
+            echo json_encode(['error' => 'SAVE_FAILED']);
         }
     }
     public function receive(): void {
@@ -137,7 +137,7 @@ class PurchaseController extends BaseController {
 
         if (empty($data['id'])) {
             http_response_code(422);
-            echo json_encode(['error' => 'id is required']);
+            echo json_encode(['error' => 'MISSING_FIELDS']);
             return;
         }
 

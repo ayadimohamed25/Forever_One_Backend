@@ -12,7 +12,7 @@ class StockController extends BaseController {
         foreach (['product_id', 'warehouse_id', 'type', 'quantity'] as $field) {
             if (!isset($data[$field]) || $data[$field] === '') {
                 http_response_code(422);
-                echo json_encode(['error' => "Field '$field' is required"]);
+                echo json_encode(['error' => 'FIELD_REQUIRED', 'field' => $field]);
                 return;
             }
         }

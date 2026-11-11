@@ -200,25 +200,56 @@ function lineQty(string $key): int {
 }
 
 // ───────────────────────── 4. The sales plan ─────────────────────────
-// 52 sales over 60 days, skewed toward recent weeks; guaranteed 3 today and
-// several this week so "today" and "this month" are never empty.
-$salesPlan = [];
-$forcedDays = [0, 0, 0, 1, 2, 3, 4, 5, 6];
-for ($i = 0; $i < 52; $i++) {
-    $daysAgo = $i < count($forcedDays)
-        ? $forcedDays[$i]
-        : (int) floor(60 * pow(mt_rand() / mt_getrandmax(), 1.7));
-    $customer = $customerPool[array_rand($customerPool)];
-    $lines = [];
-    $pool = $sellable;
-    shuffle($pool);
-    foreach (array_slice($pool, 0, rnd(1, 4)) as $key) {
-        $lines[] = [$key, lineQty($key)];
+// About one sale per business day over the last 60 days, spread evenly with
+// normal day-to-day variation (quieter Sundays, busier Saturdays) and a mild
+// upward trend. Today only gets the sales its elapsed opening hours allow,
+// so today's bar is never out of proportion.
+function saleTotal(array $lines, array $productData): float {
+    $t = 0.0;
+    foreach ($lines as [$key, $qty]) {
+        $t += $qty * $productData[$key][4] * (1 + $productData[$key][5] / 100);
     }
-    $hour = $daysAgo === 0 ? hourBetween(8, (int) date('G') > 9 ? min(18, (int) date('G') - 1) : 9)
-                           : hourBetween(8, 18);
-    $salesPlan[] = ['days' => $daysAgo, 'hour' => $hour, 'customer' => $customer, 'lines' => $lines];
+    return $t;
 }
+
+$salesPlan = [];
+$nowHour = (int) date('G');
+for ($daysAgo = 60; $daysAgo >= 0; $daysAgo--) {
+    $weekday = (int) date('w', strtotime("-$daysAgo days")); // 0 = Sunday
+    $roll = rnd(1, 100);
+    $count = $roll <= 88 ? 1 : 2;                            // every open day has sales
+    if ($weekday === 0) $count = 0;                           // Sunday: closed
+    if ($weekday === 6 && $count < 2 && rnd(1, 100) <= 40) $count++; // Saturday: busier
+    if ($daysAgo === 0) {
+        // Opening hours 8:00-19:00: only the share of the day already gone.
+        $elapsed = max(0, min(11, $nowHour - 8)) / 11;
+        $count = (int) round(1.2 * $elapsed);
+    }
+    for ($k = 0; $k < $count; $k++) {
+        $lastHour = $daysAgo === 0 ? max(8, min(18, $nowHour - 1)) : 18;
+        $lines = [];
+        $pool = $sellable;
+        shuffle($pool);
+        foreach (array_slice($pool, 0, rnd(1, 3)) as $key) {
+            $lines[] = [$key, lineQty($key)];
+        }
+        // A corner shop's ticket: trim quantities so one sale stays under
+        // ~200 DT (today: in proportion to the part of the day already gone).
+        $cap = $daysAgo === 0 ? max(60, 200 * max(0, min(11, $nowHour - 8)) / 11) : 200;
+        while (saleTotal($lines, $productData) > $cap) {
+            $i = array_search(max(array_column($lines, 1)), array_column($lines, 1));
+            if ($lines[$i][1] <= 1) break;
+            $lines[$i][1] = max(1, min($lines[$i][1] - 1, (int) floor($lines[$i][1] * 0.7)));
+        }
+        $salesPlan[] = [
+            'days' => $daysAgo,
+            'hour' => hourBetween(8, $lastHour),
+            'customer' => $customerPool[array_rand($customerPool)],
+            'lines' => $lines,
+        ];
+    }
+}
+
 // Dormant products: sold once or twice 35-58 days ago, never since.
 foreach ($dormant as $key) {
     for ($k = 0; $k < rnd(1, 2); $k++) {
@@ -227,8 +258,44 @@ foreach ($dormant as $key) {
     }
 }
 // The out-of-stock product sold its last units recently.
-$salesPlan[] = ['days' => 1, 'hour' => '16:40', 'customer' => 'ennour', 'lines' => [['semoule', 12]]];
+$salesPlan[] = ['days' => 2, 'hour' => '16:40', 'customer' => 'ennour', 'lines' => [['semoule', 4]]];
 usort($salesPlan, fn($a, $b) => [$b['days'], $b['hour']] <=> [$a['days'], $a['hour']]);
+
+// Tune the trend so "this month vs last month" (same day range, as the
+// dashboard computes it) lands between +8% and +20%: scale the quantities
+// of this month's sales until the ratio fits.
+$thisStart = strtotime(date('Y-m-01 00:00:00'));
+$prevStart = strtotime(date('Y-m-01 00:00:00', strtotime('first day of last month')));
+$prevEnd = strtotime('-1 month');
+$growth = function () use (&$salesPlan, $productData, $thisStart, $prevStart, $prevEnd): ?float {
+    $cur = $prev = 0.0;
+    foreach ($salesPlan as $s) {
+        $ts = strtotime(at($s['days'], $s['hour']));
+        $total = saleTotal($s['lines'], $productData);
+        if ($ts >= $thisStart) $cur += $total;
+        elseif ($ts >= $prevStart && $ts < $prevEnd) $prev += $total;
+    }
+    return $prev > 0 ? ($cur - $prev) / $prev * 100 : null;
+};
+for ($try = 0; $try < 12; $try++) {
+    $g = $growth();
+    if ($g === null || ($g >= 11 && $g <= 17)) break; // aim mid-range of +8..20%
+    // Split the correction between both months (sqrt each way) so no
+    // single month gets oversized tickets.
+    $factor = sqrt(max(0.5, min(2.0, 1.14 / (1 + $g / 100))));
+    foreach ($salesPlan as &$s) {
+        $ts = strtotime(at($s['days'], $s['hour']));
+        if ($ts >= $thisStart) $f = $factor;
+        elseif ($ts >= $prevStart && $ts < $prevEnd) $f = 1 / $factor;
+        else continue;
+        foreach ($s['lines'] as &$line) {
+            $line[1] = max(1, (int) round($line[1] * $f));
+        }
+        unset($line);
+    }
+    unset($s);
+}
+$plannedGrowth = $growth();
 
 // ───────────────────────── 5. The purchases plan ─────────────────────────
 // [days ago, supplier, [[product, qty]...], status, delivery, payment]
@@ -313,6 +380,7 @@ $paymentStmt = $pdo->prepare(
 );
 
 usort($purchasesPlan, fn($a, $b) => $b[0] <=> $a[0]);
+$audit = []; // [action, entity type, entity id, when, details, who] for section 11
 $year = date('Y');
 $n = 0;
 foreach ($purchasesPlan as [$daysAgo, $supplierKey, $lines, $status, $delivery, $payment]) {
@@ -355,9 +423,15 @@ foreach ($purchasesPlan as [$daysAgo, $supplierKey, $lines, $status, $delivery, 
                 'in', $qty, "Purchase $id", $receivedDate . ' 10:30:00']);
         }
     }
+    $audit[] = ['create_purchase', 'purchase', $id, $createdAt, ['total' => $total], 'stock'];
+    if ($receivedDate !== null) {
+        $audit[] = ['receive_purchase', 'purchase', $id, $receivedDate . ' 10:31:00', null, 'stock'];
+    }
     if ($payment === 'paid') {
-        $paymentStmt->execute([uuid(), $tenantId, null, $id, $total, 'bank_transfer',
-            plusDays($createdAt, $supplierData[$supplierKey][6] - rnd(0, 3))]);
+        $paidAt = plusDays($createdAt, $supplierData[$supplierKey][6] - rnd(0, 3));
+        $paymentId = uuid();
+        $paymentStmt->execute([$paymentId, $tenantId, null, $id, $total, 'bank_transfer', $paidAt]);
+        $audit[] = ['record_payment', 'payment', $paymentId, $paidAt, ['amount' => $total], 'admin'];
     }
 }
 echo 'Purchases: ' . count($purchasesPlan) . "\n";
@@ -422,14 +496,20 @@ foreach ($salesPlan as $s) {
         $mode = 'paid';
     }
     $stats[$mode]++;
+    $audit[] = ['create_sale', 'sale', $id, $createdAt, ['total' => $total], 'sales'];
 
     if ($mode === 'paid') {
         $paidAt = $terms === 0 ? $createdAt : plusDays($createdAt, min(rnd(2, max(2, $terms)), max(0, $s['days'])));
-        $paymentStmt->execute([uuid(), $tenantId, $id, null, $total,
+        $paymentId = uuid();
+        $paymentStmt->execute([$paymentId, $tenantId, $id, null, $total,
             $terms === 0 ? 'cash' : (rnd(0, 1) ? 'bank_transfer' : 'check'), $paidAt]);
+        $audit[] = ['record_payment', 'payment', $paymentId, $paidAt, ['amount' => $total], 'sales'];
     } elseif ($mode === 'partial') {
-        $paymentStmt->execute([uuid(), $tenantId, $id, null, money($total * rnd(30, 60) / 100), 'check',
-            plusDays($createdAt, min(3, $s['days']))]);
+        $paidAt = plusDays($createdAt, min(3, $s['days']));
+        $amount = money($total * rnd(30, 60) / 100);
+        $paymentId = uuid();
+        $paymentStmt->execute([$paymentId, $tenantId, $id, null, $amount, 'check', $paidAt]);
+        $audit[] = ['record_payment', 'payment', $paymentId, $paidAt, ['amount' => $amount], 'admin'];
     }
 }
 echo "Sales: " . count($salesPlan) . " (paid {$stats['paid']}, partial {$stats['partial']}, "
@@ -444,6 +524,46 @@ $moveStmt->execute([uuid(), $tenantId, $products['sucre'], $warehouses['principa
     'out', 20, 'Transfert vers Sakiet Ezzit', at(13, '13:00')]);
 $moveStmt->execute([uuid(), $tenantId, $products['sucre'], $warehouses['sakiet'],
     'in', 20, 'Transfert vers Sakiet Ezzit', at(13, '13:05')]);
+
+// ──────────────── 10b. Audit trail: ~30 entries over the last days ────────────────
+// Built from what was actually inserted above (real sale, payment and
+// purchase ids and amounts), plus daily sign-ins, a stock correction, a
+// customer update and a report download, so the Audit log reads like a
+// real week of work.
+$userIds = $pdo->query("SELECT email, id FROM users WHERE tenant_id = $t")->fetchAll(PDO::FETCH_KEY_PAIR);
+$who = [
+    'admin' => $userIds[DEMO_ADMIN] ?? $adminId,
+    'stock' => $userIds['stock@elbaraka.tn'] ?? $adminId,
+    'sales' => $userIds['ventes@elbaraka.tn'] ?? $adminId,
+];
+$nowTs = time();
+$recent = array_values(array_filter($audit,
+    fn($a) => strtotime($a[3]) >= strtotime('-6 days') && strtotime($a[3]) <= $nowTs));
+usort($recent, fn($a, $b) => strcmp($b[3], $a[3]));
+$entries = array_slice($recent, 0, 18);
+
+// Each user signs in on most mornings.
+for ($d = 0; $d <= 5; $d++) {
+    foreach (['admin' => '08', 'sales' => '08', 'stock' => '07'] as $role => $h) {
+        $when = date('Y-m-d', strtotime("-$d days")) . sprintf(' %s:%02d:00', $h, rnd(10, 55));
+        if (strtotime($when) > $nowTs || rnd(1, 100) > 60) continue;
+        $entries[] = ['login', 'user', $who[$role], $when, null, $role];
+    }
+}
+$entries[] = ['stock_movement', 'stock_movement', null, at(2, '17:30'), ['type' => 'out', 'quantity' => 1], 'stock'];
+$entries[] = ['update_customer', 'customer', $customers['golfe'], at(3, '11:20'), ['name' => $customerData['golfe'][0]], 'sales'];
+$entries[] = ['generate_report', 'report', null, at(1, '18:05'), ['type' => 'director'], 'admin'];
+$entries = array_slice($entries, 0, 32);
+
+$auditStmt = $pdo->prepare(
+    'INSERT INTO audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, details, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+);
+foreach ($entries as [$action, $type, $entityId, $when, $details, $role]) {
+    $auditStmt->execute([uuid(), $tenantId, $who[$role], $action, $type, $entityId,
+        $details ? json_encode($details, JSON_UNESCAPED_UNICODE) : null, $when]);
+}
+echo 'Audit entries: ' . count($entries) . "\n";
 
 $pdo->commit();
 
@@ -461,6 +581,7 @@ $stock = $pdo->query(
 )->fetchAll(PDO::FETCH_ASSOC);
 printf("Revenue this month : %s DT\n", number_format((float) $revenueMonth, 2, '.', ' '));
 printf("Sales today        : %d\n", $today);
+printf("This month vs last : %+.1f%% (same day range, as on the dashboard)\n", $plannedGrowth ?? 0);
 foreach ($stock as $s) {
     printf("%-19s: %s (%d left, min %d)\n", (int) $s['qty'] <= 0 ? 'Out of stock' : 'Low stock',
         $s['name'], (int) $s['qty'], (int) $s['min_threshold']);

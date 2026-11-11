@@ -28,8 +28,8 @@ class ReportService {
             'coverage' => 'Coverage',
             'toOrder' => 'To order',
             'status' => 'Status',
-            'outOfStock' => 'OUT OF STOCK',
-            'soon' => 'Soon',
+            'outOfStock' => 'Out of stock',
+            'soon' => 'Low stock',
             'ok' => 'OK',
             'days' => 'days',
             'salesSection' => 'Recent sales',
@@ -67,8 +67,8 @@ class ReportService {
             'coverage' => 'Couverture',
             'toOrder' => 'À commander',
             'status' => 'Statut',
-            'outOfStock' => 'RUPTURE',
-            'soon' => 'Bientôt',
+            'outOfStock' => 'Rupture',
+            'soon' => 'Stock faible',
             'ok' => 'OK',
             'days' => 'jours',
             'salesSection' => 'Ventes récentes',
@@ -129,7 +129,7 @@ class ReportService {
 
 <div class="band">
   <table><tr>
-    <td style="width:56px"><div class="logo">&#8734;</div></td>
+    <td style="width:52px"><div class="logo">&#8734;</div></td>
     <td>
       <div class="brand">Forever One</div>
       <div class="band-sub">{$t['title']}</div>
@@ -286,7 +286,8 @@ HTML;
     }
 
     private function dt(float $value): string {
-        return number_format($value, 2, '.', '') . ' DT';
+        // Same format as the app: 4 005.00 DT (non-breaking spaces).
+        return number_format($value, 2, '.', " ") . " DT";
     }
 
     private function day(?string $value): string {
@@ -298,49 +299,54 @@ HTML;
     }
 
     private function css(): string {
+        // The app's design system: white, 1px #E4E7EC borders, #1D4ED8
+        // accent, #101828 text, status text in the readable 700 shades.
         return <<<'CSS'
 @page { margin: 0; }
-body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #2A1F1A; margin: 0; }
+body { font-family: 'DejaVu Sans', sans-serif; font-size: 11.5px; color: #101828; margin: 0; background: #FFFFFF; }
 
-.band { background: #2A1F1A; padding: 26px 40px; }
+.band { background: #FFFFFF; padding: 26px 40px 20px 40px; border-bottom: 1px solid #E4E7EC; }
 .band table { width: 100%; border-collapse: collapse; }
 .band td { vertical-align: middle; padding: 0; }
-.logo { width: 44px; height: 44px; line-height: 44px; background: #C8553D; border-radius: 12px;
-        color: #FFFFFF; text-align: center; font-size: 24px; font-weight: bold; }
-.brand { font-size: 19px; font-weight: bold; color: #FFFFFF; }
-.company { font-size: 16px; font-weight: bold; color: #FFFFFF; }
-.band-sub { font-size: 11px; color: #D9CFC6; margin-top: 4px; }
+.logo { width: 40px; height: 34px; line-height: 30px; padding-top: 6px; background: #1D4ED8; border-radius: 10px;
+        color: #FFFFFF; text-align: center; font-size: 22px; font-weight: bold; }
+.brand { font-size: 17px; font-weight: bold; color: #101828; }
+.company { font-size: 15px; font-weight: bold; color: #101828; }
+.band-sub { font-size: 10.5px; color: #667085; margin-top: 3px; }
 
-.content { padding: 28px 40px 34px 40px; }
+.content { padding: 24px 40px 34px 40px; }
 
-.kpis { width: 100%; border-collapse: separate; border-spacing: 7px 0; }
-.kpi { width: 25%; background: #F5F1EC; border-radius: 12px; padding: 14px; vertical-align: top; }
-.kpi-label { font-size: 9.5px; color: #8C8378; text-transform: uppercase; letter-spacing: 0.4px; }
-.kpi-value { font-size: 17px; font-weight: bold; margin-top: 6px; color: #2A1F1A; }
+.kpis { width: 100%; border-collapse: separate; border-spacing: 8px 0; margin: 0 -8px; }
+.kpi { width: 25%; background: #FFFFFF; border: 1px solid #E4E7EC; border-radius: 10px;
+       padding: 12px 14px; vertical-align: top; }
+.kpi-label { font-size: 10px; color: #667085; }
+.kpi-value { font-size: 16px; font-weight: bold; margin-top: 6px; color: #101828; white-space: nowrap; }
 
 /* Keep a section with its heading; let the report run onto a second page. */
 .section { page-break-inside: avoid; }
-h2 { font-size: 15px; color: #C8553D; margin: 30px 0 10px 0; }
-.note { font-size: 11px; color: #8C8378; margin: 0 0 10px 0; }
+h2 { font-size: 13.5px; color: #101828; margin: 26px 0 8px 0; padding-left: 8px;
+     border-left: 3px solid #1D4ED8; }
+.note { font-size: 10.5px; color: #667085; margin: 0 0 8px 0; }
 
-table.data { width: 100%; border-collapse: collapse; }
-table.data th { background: #F5F1EC; color: #2A1F1A; text-align: left;
-                padding: 11px 10px; font-size: 11.5px; }
-table.data td { padding: 11px 10px; border-bottom: 1px solid #EAE3DA;
-                vertical-align: middle; font-size: 12px; }
+table.data { width: 100%; border-collapse: collapse; border: 1px solid #E4E7EC; }
+table.data th { background: #F9FAFB; color: #667085; text-align: left; font-weight: normal;
+                padding: 8px 10px; font-size: 10.5px; border-bottom: 1px solid #E4E7EC; }
+table.data td { padding: 9px 10px; border-bottom: 1px solid #E4E7EC;
+                vertical-align: middle; font-size: 11.5px; }
 table.data tr { page-break-inside: avoid; }
 .num { text-align: right; white-space: nowrap; }
 .right { text-align: right; }
 .nowrap { white-space: nowrap; }
 
-.pill { padding: 3px 10px; border-radius: 10px; font-size: 10.5px; font-weight: bold; white-space: nowrap; }
-.danger { color: #B42318; background: #FBE4E1; }
-.warning { color: #A16207; background: #FBF0D5; }
-.success { color: #3F7D4E; background: #E5F0E7; }
+.pill { padding: 2px 7px; border-radius: 4px; font-size: 10px; white-space: nowrap; }
+.danger { color: #B91C1C; background: #FEF2F2; }
+.warning { color: #B45309; background: #FFFBEB; }
+.success { color: #15803D; background: #F0FDF4; }
 
-.text-danger { color: #B42318; font-weight: bold; }
-.muted { color: #8C8378; }
-.footer { margin-top: 34px; font-size: 10px; color: #8C8378; text-align: center; }
+.text-danger { color: #B91C1C; font-weight: bold; }
+.muted { color: #667085; }
+.footer { margin-top: 30px; padding-top: 12px; border-top: 1px solid #E4E7EC;
+          font-size: 9.5px; color: #667085; text-align: center; }
 CSS;
     }
 }

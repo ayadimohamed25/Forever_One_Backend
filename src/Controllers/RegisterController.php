@@ -17,7 +17,7 @@ class RegisterController extends BaseController {
         foreach (['company_name', 'full_name', 'email', 'password'] as $field) {
             if (empty($data[$field])) {
                 http_response_code(422);
-                echo json_encode(['error' => "Field '$field' is required"]);
+                echo json_encode(['error' => 'FIELD_REQUIRED', 'field' => $field]);
                 return;
             }
         }
