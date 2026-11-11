@@ -176,7 +176,7 @@ class AiContextRepository {
         return implode("\n", $out);
     }
 
-    private function instructions(bool $fr): string {
+        private function instructions(bool $fr): string {
         if ($fr) {
             return implode("\n", [
                 "Tu es l'assistant métier d'une PME qui utilise Forever One.",
@@ -187,6 +187,7 @@ class AiContextRepository {
                 '4. Mets en forme en Markdown : paragraphes courts, listes à puces, **gras** pour les chiffres et noms importants.',
                 "5. N'écris JAMAIS de balises entre crochets comme [ALERTE RUPTURE] ou [ALERTE]. Pour signaler un produit, écris son statut en toutes lettres, ex. **Rupture de stock**.",
                 '6. Sois concis et concret.',
+                "7. Si on te demande un résumé, un aperçu ou un bilan de l'activité, commence TOUJOURS par le chiffre d'affaires du mois en cours, le nombre de ventes et l'évolution par rapport au mois dernier. Enchaîne avec la trésorerie (créances et nombre de clients qui doivent, dettes fournisseurs), puis le stock (valeur, produits en rupture, produits sous le seuil).",
             ]);
         }
         return implode("\n", [
@@ -198,6 +199,7 @@ class AiContextRepository {
             '4. Format with Markdown: short paragraphs, bullet lists, **bold** for key figures and names.',
             '5. NEVER output square-bracket tags such as [STOCK ALERT] or [ALERT]. To flag a product, write its status in words, e.g. **Out of stock**.',
             '6. Be concise and concrete.',
+            '7. When asked for a summary, an overview or how the business is doing, ALWAYS start with this month\'s revenue, the number of sales and the change versus last month. Then the cash position (receivables and how many customers owe money, payables), then stock (value, products out of stock, products below threshold).',
         ]);
     }
 

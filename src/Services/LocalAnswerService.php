@@ -47,18 +47,15 @@ class LocalAnswerService {
 
         $fr = $locale === 'fr';
 
-        $body = match ($intent) {
+                $body = match ($intent) {
             self::INTENT_DEBTS => $this->debts($tenantId, $fr),
             self::INTENT_STOCK => $this->stock($tenantId, $fr),
             self::INTENT_ACTIVITY => $this->activity($tenantId, $fr),
         };
 
-        // The user is told where the figures come from — never passed off as AI.
-        $note = $fr
-            ? "_Réponse calculée directement depuis vos données : l'assistant IA est momentanément indisponible._"
-            : '_Answered directly from your data — the AI assistant is temporarily unavailable._';
-
-        return $body . "\n\n" . $note;
+        // The app marks these answers with a "Local data" pill, so the text
+        // itself carries no disclaimer.
+        return $body;
     }
 
     private function detect(string $question): ?string {

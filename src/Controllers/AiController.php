@@ -1,6 +1,7 @@
 <?php
 namespace App\Controllers;
 use App\Services\LocalAnswerService;
+use App\Config\Database;
 
 use App\Repositories\AiContextRepository;
 use App\Repositories\AiConversationRepository;
@@ -54,6 +55,13 @@ class AiController extends BaseController {
             $claims['tenant_id'], $claims['user_id'], $question, $result['text']
         );
         $conversation['created_at'] = date('Y-m-d H:i:s');
+        $conversation['source'] = $source;
+
+        // Stored too, so the pill is still there when the history reloads.
+        if ($source === 'local') {
+            $stmt = Database::connect()->prepare('UPDATE ai_conversations SET source = ? WHERE id = ?');
+            $stmt->execute([$source, $conversation['id']]);
+        }
 
         AuditService::log(
             $claims['tenant_id'], $claims['user_id'], 'ai_query',
