@@ -26,6 +26,7 @@ $router->get("$base/payments/sale-balance", [App\Controllers\PaymentController::
 $router->get("$base/payments/purchase-balance", [App\Controllers\PaymentController::class, 'purchaseBalance']);
 
 $router->get("$base/dashboard", [App\Controllers\DashboardController::class, 'summary']);
+$router->get("$base/notifications", [App\Controllers\NotificationController::class, 'index']);
 
 $router->post("$base/documents/scan", [App\Controllers\DocumentController::class, 'scan']);
 $router->post("$base/documents/confirm", [App\Controllers\DocumentController::class, 'confirm']);
