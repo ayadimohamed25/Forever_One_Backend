@@ -302,10 +302,10 @@ HTML;
         // The app's design system: white, 1px #E4E7EC borders, #1D4ED8
         // accent, #101828 text, status text in the readable 700 shades.
         return <<<'CSS'
-@page { margin: 0; }
+@page { margin: 28px 0 30px 0; }
 body { font-family: 'DejaVu Sans', sans-serif; font-size: 11.5px; color: #101828; margin: 0; background: #FFFFFF; }
 
-.band { background: #FFFFFF; padding: 26px 40px 20px 40px; border-bottom: 1px solid #E4E7EC; }
+.band { background: #FFFFFF; padding: 4px 40px 20px 40px; border-bottom: 1px solid #E4E7EC; }
 .band table { width: 100%; border-collapse: collapse; }
 .band td { vertical-align: middle; padding: 0; }
 .logo { width: 40px; height: 34px; line-height: 30px; padding-top: 6px; background: #1D4ED8; border-radius: 10px;
@@ -322,10 +322,12 @@ body { font-family: 'DejaVu Sans', sans-serif; font-size: 11.5px; color: #101828
 .kpi-label { font-size: 10px; color: #667085; }
 .kpi-value { font-size: 16px; font-weight: bold; margin-top: 6px; color: #101828; white-space: nowrap; }
 
-/* Keep a section with its heading; let the report run onto a second page. */
-.section { page-break-inside: avoid; }
+/* Content flows and only breaks when the page is full. A heading stays
+   with the start of its table, rows never split, and a table that continues
+   on the next page repeats its header row. */
 h2 { font-size: 13.5px; color: #101828; margin: 26px 0 8px 0; padding-left: 8px;
-     border-left: 3px solid #1D4ED8; }
+     border-left: 3px solid #1D4ED8; page-break-after: avoid; }
+thead { display: table-header-group; }
 .note { font-size: 10.5px; color: #667085; margin: 0 0 8px 0; }
 
 table.data { width: 100%; border-collapse: collapse; border: 1px solid #E4E7EC; }

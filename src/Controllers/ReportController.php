@@ -11,7 +11,7 @@ class ReportController extends BaseController {
     public function directorReport(): void {
         $claims = $this->authorize('view_reports');
         $tenantId = $claims['tenant_id'];
-        $locale = in_array($_GET['locale'] ?? 'en', ['en', 'fr'], true) ? $_GET['locale'] : 'en';
+        $locale = self::reportLanguage($_GET);
 
         $pdo = Database::connect();
         $stmt = $pdo->prepare('SELECT name FROM tenants WHERE id = ?');
@@ -50,6 +50,21 @@ class ReportController extends BaseController {
         header('Content-Type: application/pdf');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
         header('Content-Length: ' . strlen($pdf));
+        // Lets anyone check, in the browser's Network tab, which language the
+        // server actually used.
+        header('Content-Language: ' . $locale);
         echo $pdf;
+    }
+
+    /// The report language is the one selected IN THE APP, sent explicitly
+    /// as ?lang= (older app builds send ?locale=). The browser's or the OS's
+    /// Accept-Language is deliberately ignored: a French Chrome must still get
+    /// an English report when the app is set to English.
+    public static function reportLanguage(array $query): string {
+        foreach (['lang', 'locale'] as $key) {
+            $value = strtolower(substr((string) ($query[$key] ?? ''), 0, 2));
+            if (in_array($value, ['en', 'fr'], true)) return $value;
+        }
+        return 'en';
     }
 }

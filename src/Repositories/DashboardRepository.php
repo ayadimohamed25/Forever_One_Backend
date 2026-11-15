@@ -3,12 +3,22 @@ namespace App\Repositories;
 use App\Config\Database;
 
 class DashboardRepository {
-    public function getSummary(string $tenantId): array {
+    /** Trend windows the dashboard offers; anything else falls back to 30. */
+    public static function trendDays($raw): int {
+        $days = (int) $raw;
+        return in_array($days, [7, 30, 90, 365], true) ? $days : 30;
+    }
+
+    public function getSummary(string $tenantId, int $trendDays = 30): array {
         $pdo = Database::connect();
+        $trendDays = self::trendDays($trendDays);
 
         return [
             'kpis' => $this->kpis($pdo, $tenantId),
-            'sales_trend' => $this->salesTrend($pdo, $tenantId),
+            'trend_days' => $trendDays,
+            'sales_trend' => $this->salesTrend($pdo, $tenantId, $trendDays, 0),
+            // The window of the same length just before, for the comparison line.
+            'sales_trend_previous' => $this->salesTrend($pdo, $tenantId, $trendDays, 1),
             'top_products' => $this->topProducts($pdo, $tenantId),
             'alerts' => $this->alerts($pdo, $tenantId),
             'recent_activity' => $this->recentActivity($pdo, $tenantId),
@@ -123,34 +133,58 @@ class DashboardRepository {
         return (int) $stmt->fetchColumn();
     }
 
-    // ---------- Daily revenue for the last 30 days ----------
+    // ---------- Revenue trend ----------
+    // $days = 7, 30 or 90 gives daily points; 365 gives 12 monthly points.
+    // $back = 0 is the current window ending today, 1 the window before it.
 
-    private function salesTrend(\PDO $pdo, string $tenantId): array {
+    private function salesTrend(\PDO $pdo, string $tenantId, int $days, int $back): array {
+        if ($days === 365) {
+            $firstMonth = strtotime(date('Y-m-01') . ' -' . (11 + 12 * $back) . ' months');
+            $start = date('Y-m-01', $firstMonth);
+            $end = date('Y-m-01', strtotime($start . ' +12 months'));
+            $stmt = $pdo->prepare(
+                "SELECT DATE_FORMAT(created_at, '%Y-%m-01') AS day, COALESCE(SUM(total), 0) AS revenue
+                 FROM sales
+                 WHERE tenant_id = ? AND created_at >= ? AND created_at < ?
+                 GROUP BY DATE_FORMAT(created_at, '%Y-%m-01')"
+            );
+            $stmt->execute([$tenantId, $start, $end]);
+            $byDay = [];
+            foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
+                $byDay[$r['day']] = (float) $r['revenue'];
+            }
+            $trend = [];
+            for ($i = 0; $i < 12; $i++) {
+                $day = date('Y-m-01', strtotime($start . " +$i months"));
+                $trend[] = ['day' => $day, 'revenue' => round($byDay[$day] ?? 0, 2)];
+            }
+            return $trend;
+        }
+
+        $lastOffset = $days * $back;              // days before today of the window end
+        $firstOffset = $lastOffset + $days - 1;   // days before today of the window start
+        $start = date('Y-m-d', strtotime("-$firstOffset days"));
+        // Exclusive end: the day after the window (tomorrow for the current one).
+        // sprintf('%+d') keeps the sign explicit; '--1 days' would mean yesterday.
+        $end = date('Y-m-d', strtotime(date('Y-m-d') . ' ' . sprintf('%+d', 1 - $lastOffset) . ' days'));
         $stmt = $pdo->prepare(
             "SELECT DATE(created_at) AS day, COALESCE(SUM(total), 0) AS revenue
              FROM sales
-             WHERE tenant_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL 29 DAY)
-             GROUP BY DATE(created_at)
-             ORDER BY day ASC"
+             WHERE tenant_id = ? AND created_at >= ? AND created_at < ?
+             GROUP BY DATE(created_at)"
         );
-        $stmt->execute([$tenantId]);
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt->execute([$tenantId, $start, $end]);
 
         // Fill missing days with zero so the chart has no gaps.
         $byDay = [];
-        foreach ($rows as $r) {
+        foreach ($stmt->fetchAll(\PDO::FETCH_ASSOC) as $r) {
             $byDay[$r['day']] = (float) $r['revenue'];
         }
-
         $trend = [];
-        for ($i = 29; $i >= 0; $i--) {
+        for ($i = $firstOffset; $i >= $lastOffset; $i--) {
             $day = date('Y-m-d', strtotime("-$i days"));
-            $trend[] = [
-                'day' => $day,
-                'revenue' => round($byDay[$day] ?? 0, 2),
-            ];
+            $trend[] = ['day' => $day, 'revenue' => round($byDay[$day] ?? 0, 2)];
         }
-
         return $trend;
     }
 
