@@ -221,9 +221,11 @@ for ($daysAgo = 60; $daysAgo >= 0; $daysAgo--) {
     if ($weekday === 0) $count = 0;                           // Sunday: closed
     if ($weekday === 6 && $count < 2 && rnd(1, 100) <= 40) $count++; // Saturday: busier
     if ($daysAgo === 0) {
-        // Opening hours 8:00-19:00: only the share of the day already gone.
+        // Opening hours 8:00-19:00: only the share of the day already gone,
+        // but at least one sale once the shop has been open an hour, so
+        // the demo always has activity today.
         $elapsed = max(0, min(11, $nowHour - 8)) / 11;
-        $count = (int) round(1.2 * $elapsed);
+        $count = $nowHour >= 9 ? max(1, (int) round(2 * $elapsed)) : 0;
     }
     for ($k = 0; $k < $count; $k++) {
         $lastHour = $daysAgo === 0 ? max(8, min(18, $nowHour - 1)) : 18;
@@ -308,7 +310,9 @@ $purchasesPlan = [
     [33, 'sotupro', [['tomate', 36], ['harissa', 48], ['semoule', 20]],  'received', 'late',    'paid'],
     [26, 'cafe',    [['cafe', 48], ['the', 24]],                         'received', 'on_time', 'paid'],
     [19, 'danone',  [['lait', 96], ['jus', 24]],                         'received', 'on_time', 'paid'],
-    [17, 'sotupro', [['huile', 12], ['sucre', 100], ['pates', 120]],     'received', 'late',    'unpaid'],
+    // Paid on its due date: a healthy shop settles suppliers on time, so
+    // what customers owe stays above what the shop owes (positive net).
+    [17, 'sotupro', [['huile', 12], ['sucre', 100], ['pates', 120]],     'received', 'late',    'paid'],
     [ 8, 'emball',  [['sacs', 20], ['savon', 8]],                        'received', 'on_time', 'unpaid'],
     [ 4, 'cafe',    [['cafe', 36], ['the', 24]],                         'received', 'on_time', 'unpaid'],
     [ 9, 'sotupro', [['semoule', 40], ['tomate', 24], ['eau', 60]],      'draft',    'pending', 'unpaid'],
@@ -582,6 +586,13 @@ $stock = $pdo->query(
 printf("Revenue this month : %s DT\n", number_format((float) $revenueMonth, 2, '.', ' '));
 printf("Sales today        : %d\n", $today);
 printf("This month vs last : %+.1f%% (same day range, as on the dashboard)\n", $plannedGrowth ?? 0);
+$receivable = (float) $q("SELECT COALESCE(SUM(s.total),0) - COALESCE((SELECT SUM(p.amount) FROM payments p
+                          JOIN sales s2 ON s2.id = p.sale_id WHERE s2.tenant_id=$t),0) FROM sales s WHERE s.tenant_id=$t");
+$payable = (float) $q("SELECT COALESCE(SUM(pu.total),0) - COALESCE((SELECT SUM(p.amount) FROM payments p
+                       JOIN purchases pu2 ON pu2.id = p.purchase_id WHERE pu2.tenant_id=$t),0) FROM purchases pu WHERE pu.tenant_id=$t");
+printf("To collect         : %s DT\n", number_format($receivable, 2, '.', ' '));
+printf("To pay             : %s DT\n", number_format($payable, 2, '.', ' '));
+printf("Net position       : %+.2f DT%s\n", $receivable - $payable, $receivable > $payable ? '' : '  <-- NEGATIVE');
 foreach ($stock as $s) {
     printf("%-19s: %s (%d left, min %d)\n", (int) $s['qty'] <= 0 ? 'Out of stock' : 'Low stock',
         $s['name'], (int) $s['qty'], (int) $s['min_threshold']);
